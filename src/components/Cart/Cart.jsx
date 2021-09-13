@@ -7,6 +7,8 @@ import Checkout from './Checkout';
 
 const Cart = (props) => {
 	const cartCtx = useContext(CartContext);
+	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [didSubmit, setDidSubmit] = useState(false);
 	const [isCheckout, setIsCheckout] = useState(false);
 
 	const totalAmount = '$' + cartCtx.totalAmount.toFixed(2);
@@ -22,6 +24,23 @@ const Cart = (props) => {
 
 	function orderHandler() {
 		setIsCheckout(true);
+	}
+
+	async function submitOrderHandler(userData) {
+		setIsSubmitting(true);
+		await fetch(
+			'https://react-food-df3ce-default-rtdb.europe-west1.firebasedatabase.app/orders.json',
+			{
+				method: 'POST',
+				body: JSON.stringify({
+					user: userData,
+					orderedItems: cartCtx.items,
+				}),
+			}
+		);
+		setIsSubmitting(false);
+		setDidSubmit(true);
+		cartCtx.clearCart();
 	}
 
 	const cartItems = (
@@ -52,14 +71,40 @@ const Cart = (props) => {
 		</div>
 	);
 
-	return (
-		<Modal onClose={props.onHideCart}>
+	const isSubmittingModalContent = <p>Sending order data...</p>;
+	const didSubmitModalContent = (
+		<>
+			<p>Successfully sent the order!</p>
+			<div className={classes.actions}>
+				<button className={classes.button} onClick={props.onHideCart}>
+					Close
+				</button>
+			</div>
+		</>
+	);
+
+	const cartModalContent = (
+		<>
 			{cartItems}
 			<div className={classes.total}>
 				<span> Total Amount</span>
 				<span>{totalAmount}</span>
 			</div>
-			{isCheckout ? <Checkout onCancel={props.onHideCart} /> : modalActions}
+			{isCheckout ? (
+				<Checkout onConfirm={submitOrderHandler} onCancel={props.onHideCart} />
+			) : (
+				modalActions
+			)}
+		</>
+	);
+
+	return (
+		<Modal onClose={props.onHideCart}>
+			{isSubmitting
+				? isSubmittingModalContent
+				: didSubmit
+				? didSubmitModalContent
+				: cartModalContent}
 		</Modal>
 	);
 };

@@ -6,6 +6,7 @@ export const CartContext = createContext({
 	totalAmount: 0,
 	addItem(item) {},
 	removeItem(id) {},
+	clearCart() {},
 });
 
 const defaultCartState = {
@@ -56,10 +57,12 @@ function cartReducer(state, action) {
 				totalAmount: updatedTotalAmount,
 			};
 		}
+		case 'CLEAR': {
+			return defaultCartState;
+		}
 		default:
-			break;
+			return defaultCartState;
 	}
-	return defaultCartState;
 }
 
 const CartProvider = (props) => {
@@ -73,11 +76,16 @@ const CartProvider = (props) => {
 		dispatchCartAction({ type: 'REMOVE', id });
 	}
 
+	function clearCartHandler() {
+		dispatchCartAction({ type: 'clear' });
+	}
+
 	const cartContext = {
 		items: cartState.items,
 		totalAmount: cartState.totalAmount,
 		addItem: addItemToCartHandler,
 		removeItem: removeItemFromCartHandler,
+		clearCart: clearCartHandler,
 	};
 
 	return <CartContext.Provider value={cartContext}>{props.children}</CartContext.Provider>;
